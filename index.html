@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Rostros - Validador SQL</title>
+    <style>
+      
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #4a76c5; 
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+        }
+
+        .search-container {
+            background-color: white;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            border: 3px solid #7eb342; 
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 12px;
+            font-size: 18px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+     
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        
+        .alert {
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none; 
+        }
+
+        .alert-success {
+            background-color: #e8f5e9;
+            border-left: 8px solid #4caf50;
+            color: #2e7d32;
+        }
+
+        .alert-error {
+            background-color: #ffebee;
+            border-left: 8px solid #ef5350;
+            color: #c62828;
+        }
+
+   
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 2px;
+            margin-bottom: 10px;
+        }
+
+       
+        .history-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            height: fit-content;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .history-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="search-container">
+        <input type="text" id="queryInput" placeholder="FIND faces WHERE age > 25 AND emotion = 'happy'">
+        <button onclick="procesarConsulta()">Validar consulta</button>
+    </div>
+
+    <div class="main-content">
+        <div class="left-panel">
+            
+            <div id="successMsg" class="alert alert-success">
+                <strong>✅ Consulta válida</strong>
+                <p id="successText"></p>
+            </div>
+
+            <div id="errorMsg" class="alert alert-error">
+                <strong>🚫 Error semántico:</strong> <span id="errorText"></span>
+                <p><small>Campos válidos: age, gender, emotion</small></p>
+            </div>
+
+            <div id="galeria" class="results-grid">
+                </div>
+        </div>
+
+        <div class="history-panel">
+            <h3>Historial de Consultas</h3>
+            <ul class="history-list" id="historial">
+                </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function procesarConsulta() {
+        const query = document.getElementById('queryInput').value;
+        const successBox = document.getElementById('successMsg');
+        const errorBox = document.getElementById('errorMsg');
+        const galeria = document.getElementById('galeria');
+        const historial = document.getElementById('historial');
+
+        successBox.style.display = 'none';
+        errorBox.style.display = 'none';
+        galeria.innerHTML = "";
+
+        try {
+            
+            const response = await fetch(`/buscar?q=${encodeURIComponent(query)}`);
+            
+            if (!response.ok) {
+                
+                const text = await response.text();
+                errorBox.style.display = 'block';
+                document.getElementById('errorText').innerText = text;
+                agregarAlHistorial(query, false);
+                return;
+            }
+
+         
+            const datos = await response.json();
+            successBox.style.display = 'block';
+            document.getElementById('successText').innerText = `Se encontraron ${datos.length} rostros que cumplen la condición.`;
+            
+            datos.forEach(cara => {
+                galeria.innerHTML += `
+                    <div class="card">
+                        <img src="${cara.path}" alt="Rostro">
+                        <p><b>Edad:</b> ${cara.age}</p>
+                        <p><b>Emoción:</b> ${cara.emotion}</p>
+                    </div>`;
+            });
+            agregarAlHistorial(query, true);
+
+        } catch (e) {
+            alert("Error: Asegúrate de que el servidor 'server.go' esté corriendo.");
+        }
+    }
+
+    function agregarAlHistorial(query, status) {
+        const historial = document.getElementById('historial');
+        const li = document.createElement('li');
+        li.className = 'history-item';
+        li.innerHTML = `<span>${query}</span> <span>${status ? '✅' : '❌'}</span>`;
+        historial.prepend(li); 
+    }
+</script>
+
+</body>
+</html>
