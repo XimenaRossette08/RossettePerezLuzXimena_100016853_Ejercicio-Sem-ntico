@@ -1,4 +1,4 @@
-# 🔍 Analizador de Rostros IA (Go + Python + Postgres)
+# Analizador de Rostros IA (Go + Python + Postgres)
 
 Este proyecto es un sistema de análisis de atributos faciales en tiempo real. Utiliza una arquitectura híbrida donde **Python** se encarga del procesamiento de imágenes con Inteligencia Artificial, **PostgreSQL** almacena los metadatos y un servidor en **Go** gestiona las consultas mediante un lenguaje de búsqueda personalizado.
 
